@@ -1,0 +1,33 @@
+LDO Regulatros:
+* Capacitors should be ceramic X5R/X7R, >= 10V.
+
+PMW3389:
+* 4.7uF capacitor is 10V.
+
+BOM:
+Ref                   Qnty  Value             			      Buy  Description
+C1, C14, C15, C18,    4     10uF              GRM188Z71A106KA73D      10   Unpolarized capacitor *
+C2, C3,               2     15pF              GRM1885C1H150FA01D      10   Unpolarized capacitor *
+C4, C6, C7, C8,       
+C10, C11, C12, C20,   8     100nF             EMK107B7104KA-T         10   Unpolarized capacitor *
+C5, C9, C16, C17, C19 5     1uF               EMK107B7105KA-T	      10   Unpolarized capacitor *
+C13,                  1     4.7uF 10V         LMK107BJ475KA-T	      10   Unpolarized capacitor *
+J1,                   1     USB_B_Micro       Wurth 629105150521      3    USB Micro Type B connector *
+J2, J3,               2     Conn_01x03        Harwin M22-2530305      5    2.0mm pin header *
+                                              Harwin M22-3010300      5          female housing *
+                                              Harwin M22-3040042      50         crimp contact *
+R1, R2,               2     22 5%             CRCW060322R0FKEA	      10   Resistor *
+R3, R6,               2     10K               CRCW060310K0FKEA        0    Resistor 
+R4,                   1     1k                RCA06031K00FKEA         0    Resistor
+R5,                   1     13                CRCW060313R0FKEA        10   Resistor *
+SW1,                  1     SW_Push           TL3305AF160QG	      0    Push button switch, generic, two pins
+U1,                   1     ATmega32U4-AU     			           Microcontroller, TQFP-44
+U2,                   1     LD39015M33R       LD39015M33R	      3    150mA voltage regulator, 3.3V, SOT-23-5 *
+U3,                   1     PMW3389-T3QU                              0
+U4,                   1     TLV70019_SOT23-5  TLV70019DDCR 	      3    200mA voltage regulator, 1.9V, SOT-23-5 *
+Y1,                   1     Crystal_GND24     ABM3B-8.000MHZ-10-1-U-T 3    Four pin crystal, GND on pins 2 and 4
+
+
+TODO:
+* Check USB connector footprint
+* Double-check schematic
