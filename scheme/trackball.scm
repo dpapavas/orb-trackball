@@ -138,6 +138,7 @@
 (define-option place-caps? #false)      ; to check fit and tolerances.
 (define-option place-switches? #false)
 (define-option place-boot? #false)
+(define-option place-pedestal? #false)
 
 ;; These options produce horizontal (at the given height) or vertical (at the
 ;; given angle) sections in the `assembly` output, which can be useful to
@@ -216,6 +217,11 @@
 (define lens-width 19)
 (define lens-height 2135/100)
 
+;; Parameters for the mountable pedestal.
+
+(define pedestal-tab-length 8)
+(define pedestal-width 6)
+
 ;; Measurements and parameters derived from the above; not meant to be adjusted.
 
 (define vertical-section                ; Cut the part vertically at the
@@ -244,6 +250,8 @@
 
 (define board-cutout-radius (+ board-radius board-cutout-gap))
 (define board-rotation (- (first button-layout) 90))
+
+(define pedestal-radius (+ board-cutout-radius wall-width (- chamfer-length)))
 
 ;; Functions named place-*, such as these, accept a part and return a list of
 ;; copies of it, transformed to their mounted positions and orientations.  They
@@ -917,6 +925,99 @@
    (place-board
     (translate (cuboid 10 30 10) 0 35/2 0))))
 
+(define-output pedestal
+  (let ((R (- board-cutout-radius 1))
+        (c (lambda (r x) (/ (+ r x) r)))
+        (inner (lambda (r)
+                 (let* ((δ 8/5)
+                        (δ_1 (- (/ pedestal-width 2) δ)))
+                   (~> (simple-polygon
+                        (point 0 0)
+                        (point (- r) 0)
+                        (point (- r) (- pedestal-width))
+                        (point 0 (- pedestal-width))
+                        (point 0 (- δ_1 pedestal-width))
+                        (point δ (- (+ δ δ_1)))
+                        (point 0 (- δ_1)))
+
+                       (angular-extrusion _ r -180 180)
+                       (rotate _ 90 0))))))
+    (difference
+     (union
+      ;; Inner base
+
+      (inner R)
+
+      ;; Bosses
+
+      (intersection
+       (apply union (place-boss
+                     (let* ((r 3)
+                            (c_1 (c r 1/2))
+                            (c_2 (c r 1)))
+                       (extrusion (circle r)
+                                  (translation 0 0 board-width)
+                                  (transformation-append
+                                   (translation 0 0 (+ board-width 1/2))
+                                   (scaling c_1 c_1 1))
+                                  (transformation-append
+                                   (translation 0 0 (- board-height 1/2))
+                                   (scaling c_1 c_1 1))
+                                  (transformation-append
+                                   (translation 0 0 board-height)
+                                   (scaling c_2 c_2 1))))))
+       (cylinder R 50))
+
+      ;; Outer base
+
+      (? ~> (let ((r 17/2)
+                (y (+ pedestal-radius 3/2)))
+            (union
+             (circle pedestal-radius)
+             (hull (translate (circle r) 0 (+ pedestal-radius
+                                              pedestal-tab-length))
+                   (point r y)
+                   (point (- r) y))
+             (simple-polygon
+              (point r y)
+              (point (- r) y)
+              (point (- (+ r 10)) (- y 10))
+              (point (+ r 10) (- y 10)))))
+          (linear-extrusion _ 0 (- (* 2 chamfer-length) pedestal-width))
+          (minkowski-sum _ chamfer-kernel)
+          (flush-top _)
+          (difference _ (inner (+ R 1/3)))))
+
+     ;; Countersunk boss holes
+
+     (apply union (place-boss
+                   (let* ((r 3/2)
+                          (h 3/2)
+                          (c_1 (c r h)))
+                     (extrusion (circle r)
+                                (translation 0 0 0)
+                                (translation 0 0 (+ board-height 6 (- h)))
+                                (transformation-append
+                                 (translation 0 0 (+ board-height 6))
+                                 (scaling c_1 c_1 1))))))
+
+     ;; Countersunk mount hole
+
+     (let* ((r 13/4)
+            (h 7/2)
+            (c_1 (c r 1/2))
+            (c_2 (c r h))
+            (y (+ pedestal-radius pedestal-tab-length)))
+       (extrusion (circle r)
+                  (transformation-append
+                   (translation 0 y 0)
+                   (scaling c_2 c_2 1))
+                  (translation 0 y (- h))
+                  (translation 0 y (- 1/2 pedestal-width))
+                  (transformation-append
+                   (translation 0 y (- pedestal-width))
+                   (scaling c_1 c_1 1)))))))
+
 ;; The buttons (or, more precisely, the button switch caps).  The function below
 ;; defines the basic shape in a parametric way, so that we can call it to
 ;; instantiate two versions, one slightly smaller than the other, and subtract
@@ -1006,6 +1107,7 @@
   (when~> chassis
 
           place-boot? (union _ boot)
+          place-pedestal? (union _ pedestal)
           place-ball? (union _ ball)
           place-board? (union _
                               (place-board board)
