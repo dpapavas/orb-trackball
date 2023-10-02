@@ -34,6 +34,10 @@
 
 #define BUTTONS BUTTON_C, BUTTON_B, BUTTON_A, BUTTON_E
 
+/* Switch debounce interval, in number of polling intervals. */
+
+#define DEBOUNCE_INTERVAL 5
+
 /* If defined, this button will act as a toggle that makes the ball
  * act as a wheel, or rather as two wheels, vertical and
  * horizontal. */

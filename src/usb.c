@@ -561,19 +561,48 @@ bool CALLBACK_HID_Device_CreateHIDReport(
         return true;
     } else {
         bool get_axes(int16_t *p);
-        static uint8_t old_buttons;
+        static uint8_t old_buttons, new_buttons, debounce_count;
         const uint8_t buttons[] = {BUTTONS};
 
         MouseReport_Data_t *p = (MouseReport_Data_t *)ReportData;
         *ReportSize = sizeof(MouseReport_Data_t);
 
-        p->buttons = 0;
+        /* Read the current axes state and create the report. */
+
+        p->buttons = old_buttons;
+        const bool q = get_axes(p->axes);
+
+        /* Read the current button state. */
+
+        uint8_t b = 0;
         for (uint8_t i = 0; i < sizeof(buttons); i++) {
-            p->buttons |= (((PIND & (1 << buttons[i])) == 0) << i);
+            b |= (((PIND & (1 << buttons[i])) == 0) << i);
         }
 
-        const bool q = get_axes(p->axes) || (p->buttons != old_buttons);
-        old_buttons = p->buttons;
+        if (!debounce_count) {
+            /* If the button state changed, start debouncing. */
+
+            if (b != old_buttons) {
+                new_buttons = b;
+                debounce_count = 1;
+            }
+        } else {
+            /* Is the new button state stable? */
+
+            if (b == new_buttons) {
+                debounce_count += 1;
+            } else {
+                debounce_count = 1;
+            }
+
+            if (debounce_count > DEBOUNCE_INTERVAL) {
+                /* Update the button state. */
+
+                p->buttons = old_buttons = new_buttons;
+                debounce_count = 0;
+                return true;
+            }
+        }
 
         return q;
     }
